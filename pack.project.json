@@ -1,0 +1,12 @@
+{
+    "name": "SmartBone",
+    "tree": {
+      "$path": "Include/Linking.lua",
+      "Packages": {
+        "$path": "Packages",
+        "[PROJECT_NAME]": {
+            "$path": "lib"
+        }        
+      }
+    }
+  }

@@ -1,0 +1,7 @@
+[package]
+name = "celnak/smartbone"
+version = "0.1.0"
+registry = "https://github.com/CelnakRBLX/SmartBone"
+realm = "shared"
+
+[dependencies]
