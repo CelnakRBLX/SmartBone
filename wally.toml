@@ -1,7 +1,10 @@
 [package]
-name = "celnak/smartbone"
+name = "celnakrblx/smartbone"
 version = "0.1.0"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 [dependencies]
+
+include = ["src/SmartBone", "default.project.json", "LICENSE", "README.md","Wally.toml"]
+exclude = ["**"]
