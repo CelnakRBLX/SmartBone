@@ -2,8 +2,54 @@
 
 -- // Types \\ --
 
+type func = () -> ()
 type dictionary = { [string]: any }
 type array = { [number]: any }
+
+type rootList = {
+	[number]: Bone
+}
+type particle = {
+	Bone: Bone,
+	RestLength: number,
+	Weight: number,
+	ParentIndex: number,
+	Transform: CFrame,
+	LocalTransform: CFrame,
+	RootTransform: CFrame,
+	Radius: number,
+	IsColliding: boolean,
+
+	TransformOffset: CFrame,
+	LastTransformOffset: CFrame,
+	LocalTransformOffset: CFrame,
+	RestPosition: Vector3,
+	BoneTransform: CFrame,
+	CalculatedWorldCFrame: CFrame,
+	CalculatedWorldPosition: Vector3,
+
+	Position: Vector3,
+	LastPosition: Vector3,
+	Anchored: boolean,
+	RecyclingBin: any,
+}
+type particleArray = {
+	[number]: particle
+}
+type particleTree = {
+	WindOffset: number,
+	Root: Bone | nil,
+	RootPart: BasePart,
+	RootWorldToLocal: Vector3,
+	BoneTotalLength: number,
+	Particles: particleArray,
+	LocalCFrame: CFrame,
+	LocalGravity: Vector3,
+	Force: Vector3,
+	RestGravity: Vector3,
+	ObjectMove: Vector3,
+	ObjectPreviousPosition: Vector3,
+}
 
 -- // Services \\ --
 
@@ -134,7 +180,7 @@ end
 function module:AppendParticles(particleTree: dictionary, Bone: Bone, ParentIndex: number, BoneLength: number)
 	local Settings = self.Settings
 
-	local particle = Particle.new(Bone, particleTree.Root, self.RootPart, Settings)
+	local particle: particle = Particle.new(Bone, particleTree.Root, self.RootPart, Settings)
 	particle.Position, particle.LastPosition = Bone.WorldPosition, Bone.WorldPosition
 	particle.ParentIndex = ParentIndex
 	particle.BoneLength = BoneLength
@@ -170,7 +216,7 @@ function module:UpdateParameters(setting, value)
 	self.Settings[setting] = if SettingsMath[setting] then SettingsMath[setting](value) else value
 end
 
-function module:PreUpdate(particleTree: dictionary)
+function module:PreUpdate(particleTree: particleTree)
 	local rootPart = particleTree.RootPart
 	local root = particleTree.Root
 
@@ -190,7 +236,7 @@ function module:PreUpdate(particleTree: dictionary)
 	end
 end
 
-function module:UpdateParticles(particleTree: dictionary, Delta: number, LoopIndex: number)
+function module:UpdateParticles(particleTree: particleTree, Delta: number, LoopIndex: number)
 	local Settings = self.Settings
 
 	local Damping = Settings.Damping
@@ -255,7 +301,7 @@ function module:UpdateParticles(particleTree: dictionary, Delta: number, LoopInd
 	end
 end
 
-function module:CorrectParticles(particleTree: dictionary, Delta: number)
+function module:CorrectParticles(particleTree: particleTree, Delta: number)
 	local Settings = self.Settings
 	local stiffness = Settings.Stiffness
 
@@ -295,7 +341,7 @@ function module:CorrectParticles(particleTree: dictionary, Delta: number)
 	end
 end
 
-function module:SkipUpdateParticles(particleTree: dictionary)
+function module:SkipUpdateParticles(particleTree: particleTree)
 	local parentPoint, restLength, stiffness
 	local restPosition, difference, length, maxLength
 
@@ -333,7 +379,7 @@ function module:SkipUpdateParticles(particleTree: dictionary)
 	end
 end
 
-function module:CalculateTransforms(particleTree: dictionary, Delta: number)
+function module:CalculateTransforms(particleTree: particleTree, Delta: number)
 	if self.InRange then
 		local parentPoint, boneParent, bone
 		local localPosition, referenceCFrame, v0, v1, rotation, factor, alpha
@@ -364,7 +410,7 @@ function module:CalculateTransforms(particleTree: dictionary, Delta: number)
 	end
 end
 
-function module:TransformBones(particleTree: dictionary)
+function module:TransformBones(particleTree: particleTree)
 	local parentPoint, boneParent
 
 	if self.InRange then
@@ -385,7 +431,7 @@ function module:TransformBones(particleTree: dictionary)
 	end
 end
 
-function module:DEBUG(particleTree: dictionary)
+function module:DEBUG(particleTree: particleTree)
 	for _, point in particleTree.Particles do
 		if point then
 			point.DebugPart.CFrame = CFrame.new(point.Position) * point.TransformOffset.Rotation
@@ -393,7 +439,7 @@ function module:DEBUG(particleTree: dictionary)
 	end
 end
 
-function module:RunLoop(particleTree: dictionary, Delta: number)
+function module:RunLoop(particleTree: particleTree, Delta: number)
 	local UpdateRate = self.Settings.UpdateRate
 	local loop = 1
 	local timeVar = (1 / UpdateRate)
@@ -422,14 +468,14 @@ function module:RunLoop(particleTree: dictionary, Delta: number)
 	end
 end
 
-function module:ResetParticles(particleTree: dictionary)
+function module:ResetParticles(particleTree: particleTree)
 	for _, point in particleTree.Particles do
 		point.LastPosition = point.TransformOffset.Position
 		point.Position = point.TransformOffset.Position
 	end
 end
 
-function module:ResetTransforms(particleTree: dictionary)
+function module:ResetTransforms(particleTree: particleTree)
 	local transformOffset
 
 	for _, point in particleTree.Particles do
@@ -444,7 +490,7 @@ function module:ResetTransforms(particleTree: dictionary)
 end
 
 function module:UpdateBones(Delta: number)
-	for _, particleTree in self.ParticleTrees do
+	for _, particleTree: particleTree in self.ParticleTrees do
 		self:PreUpdate(particleTree)
 		self:RunLoop(particleTree, Delta)
 
@@ -545,7 +591,7 @@ function module.Start()
 
 				SmartBones[Object].RemovedEvent:Destroy()
 
-				for _, particleTree in ipairs(SmartBones[Object].ParticleTrees) do
+				for _, particleTree: particleTree in ipairs(SmartBones[Object].ParticleTrees) do
 					for _, _Particle in particleTree.Particles do
 						for _, Recycling in _Particle.RecyclingBin do
 							Recycling:Destroy()
