@@ -7,8 +7,14 @@ type array = { [number]: any }
 
 -- // Services \\ --
 
-local LIGHTING = game:GetService("Lighting")
+local Lighting = game:GetService("Lighting")
 local CollectionService = game:GetService("CollectionService")
+local RunService = game:GetService("RunService")
+
+if not RunService:IsClient() then 
+	warn("Attempted to initialize SmartBone on Server.") 
+	return nil
+end
 
 -- // Constructors \\ --
 
@@ -29,6 +35,8 @@ local Utilities = require(script.Dependencies.Utilities)
 
 local ID_SEED = 12098135901304
 local ID_RANDOM = Random.new(ID_SEED)
+
+local SmartBoneTags = CollectionService:GetTagged("SmartBone")
 
 -- // Debug \\ --
 
@@ -95,8 +103,8 @@ function module:Init()
 		self:UpdateParameters(Attribute, RootPart:GetAttribute(Attribute))
 	end)
 
-	self.Connections["LightingAttributeChanged"] = LIGHTING.AttributeChanged:ConnectParallel(function(Attribute: string)
-		self:UpdateParameters(Attribute, LIGHTING:GetAttribute(Attribute))
+	self.Connections["LightingAttributeChanged"] = Lighting.AttributeChanged:ConnectParallel(function(Attribute: string)
+		self:UpdateParameters(Attribute, Lighting:GetAttribute(Attribute))
 	end)
 
 	for _, Bone in RootPart:GetDescendants() do
@@ -465,64 +473,62 @@ function module.Start()
 	local IgnoreList = {}
 
 	local function registerSmartBoneObject(Object: BasePart)
-		task.spawn(function()
-			if
-				Object:IsA("BasePart")
-				and Object:FindFirstChildOfClass("Bone")
-				and game.Workspace:IsAncestorOf(Object)
-			then
-				local RootList = {}
+		if
+			Object:IsA("BasePart")
+			and Utilities.WaitForChildOfClass(Object, "Bone", 3)
+			and game.Workspace:IsAncestorOf(Object)
+		then
+			local RootList = {}
 
-				if
-					Object:GetAttribute("Roots")
-					and Object:GetAttribute("Roots") ~= nil
-					and typeof(Object:GetAttribute("Roots")) == "string"
-				then
-					local list = string.split(Object:GetAttribute("Roots"), ",")
-					for _, value in ipairs(list) do
-						local Bone = Object:FindFirstChild(value, true)
-						if Bone and Bone:IsA("Bone") then
-							table.insert(RootList, Bone)
-						end
+			if
+				Object:GetAttribute("Roots")
+				and Object:GetAttribute("Roots") ~= nil
+				and typeof(Object:GetAttribute("Roots")) == "string"
+			then
+				local list = string.split(Object:GetAttribute("Roots"), ",")
+				for _, value in ipairs(list) do
+					local Bone = Object:FindFirstChild(value, true)
+					if Bone and Bone:IsA("Bone") then
+						table.insert(RootList, Bone)
 					end
 				end
-
-				if #RootList > 0 then
-					local SmartBoneActor = Instance.new("Actor")
-
-					local Event = Instance.new("BindableFunction")
-					Event.Name = "Event"
-					Event.Parent = SmartBoneActor
-
-					local RuntimeScript = script.Dependencies.ActorScript:Clone()
-					RuntimeScript.Name = "Runtime"
-					RuntimeScript.Parent = SmartBoneActor
-
-					SmartBoneActor.Parent = ActorsFolder
-
-					RuntimeScript.Enabled = true
-
-					SmartBones[Object] = SmartBoneActor.Event:Invoke(Object, RootList)
-
-					SmartBoneActor.Name = Object.Name .. SmartBones[Object].ID
-
-					SmartBones[Object].RemovedEvent.Event:Once(function()
-						SmartBoneActor.Runtime.Enabled = false
-						SmartBoneActor:Destroy()
-					end)
-
-					table.insert(IgnoreList, Object)
-					DebugPrint("Created new SmartBone Object with ID: " .. SmartBones[Object].ID)
-				else
-					table.insert(IgnoreList, Object)
-					DebugPrint(
-						"Failed to create SmartBone Object for "
-							.. Object:GetFullName()
-							.. "! Make sure you have defined the Root Bone(s) for this object!"
-					)
-				end
 			end
-		end)
+
+			if #RootList > 0 then
+				local SmartBoneActor = Instance.new("Actor")
+
+				local Event = Instance.new("BindableFunction")
+				Event.Name = "Event"
+				Event.Parent = SmartBoneActor
+
+				local RuntimeScript = script.Dependencies.ActorScript:Clone()
+				RuntimeScript.Name = "Runtime"
+				RuntimeScript.Parent = SmartBoneActor
+
+				SmartBoneActor.Parent = ActorsFolder
+
+				RuntimeScript.Enabled = true
+
+				SmartBones[Object] = SmartBoneActor.Event:Invoke(Object, RootList)
+
+				SmartBoneActor.Name = Object.Name .. SmartBones[Object].ID
+
+				SmartBones[Object].RemovedEvent.Event:Once(function()
+					SmartBoneActor.Runtime.Enabled = false
+					SmartBoneActor:Destroy()
+				end)
+
+				table.insert(IgnoreList, Object)
+				DebugPrint("Created new SmartBone Object with ID: " .. SmartBones[Object].ID)
+			else
+				table.insert(IgnoreList, Object)
+				DebugPrint(
+					"Failed to create SmartBone Object for "
+						.. Object:GetFullName()
+						.. "! Make sure you have defined the Root Bone(s) for this object!"
+				)
+			end
+		end
 	end
 
 	local function removeSmartBoneObject(Object: BasePart)
@@ -564,9 +570,11 @@ function module.Start()
 	CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(registerSmartBoneObject)
 	CollectionService:GetInstanceRemovedSignal("SmartBone"):Connect(removeSmartBoneObject)
 
-	for _, Object in pairs(CollectionService:GetTagged("SmartBone")) do
+	for _, Object in pairs(SmartBoneTags) do
 		if not SmartBones[Object] and not table.find(IgnoreList, Object) then
-			registerSmartBoneObject(Object)
+			task.spawn(function()
+				registerSmartBoneObject(Object)
+			end)
 		end
 	end
 end
