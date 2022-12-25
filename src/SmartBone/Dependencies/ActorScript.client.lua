@@ -11,12 +11,27 @@ local Event = script.Parent.Event
 
 -- // Services \\ --
 
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- // Dependencies \\ --
-
-local Module = ReplicatedStorage:WaitForChild("SmartBone")
+local Paths = {
+	ReplicatedStorage,
+	Players.LocalPlayer:WaitForChild("PlayerScripts"),
+}
+local Module
+for _,service in pairs(Paths) do
+	local found = service:FindFirstChild("SmartBone", true)
+	if found and found:IsA("ModuleScript") then
+		Module = found
+		break
+	end
+end
+if not Module then
+	warn("SmartBone was not found!")
+	return
+end
 local Dependencies = Module:WaitForChild("Dependencies")
 
 local SmartBone = require(Module)
