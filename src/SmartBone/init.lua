@@ -533,7 +533,7 @@ function module.Start()
 
 	local function removeSmartBoneObject(Object: BasePart)
 		if SmartBones[Object] then
-			print("Removing SmartBone Object with ID: " .. SmartBones[Object].ID)
+			DebugPrint("Removing SmartBone Object with ID: " .. SmartBones[Object].ID)
 			task.spawn(function()
 				for _, Connection in pairs(SmartBones[Object].Connections) do
 					Connection:Disconnect()
