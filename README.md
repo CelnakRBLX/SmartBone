@@ -23,37 +23,37 @@ An optimized solution for dynamically simulated bone physics inside Roblox.
 
 * Change any other values by adding the corresponding Attributes:
 
-* * [Number] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
+  * [Number] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
 
-* * [Number] Stiffness – How much of the bone(s) original CFrame is preserved.
+  * [Number] Stiffness – How much of the bone(s) original CFrame is preserved.
 
-* * [Number] Inertia – How much the of the movement of the object is ignored.
+  * [Number] Inertia – How much the of the movement of the object is ignored.
 
-* * [Number] Elasticity – How much force is applied to return each bone to its original CFrame.
+  * [Number] Elasticity – How much force is applied to return each bone to its original CFrame.
 
-* * [Vector3] Gravity – Direction and Magnitude of Gravity in World Space.
+  * [Vector3] Gravity – Direction and Magnitude of Gravity in World Space.
 
-* * [Vector3] Force – Additional Force applied to Bones in World Space. Supplementary to Gravity.
+  * [Vector3] Force – Additional Force applied to Bones in World Space. Supplementary to Gravity.
 
-* * [Number] WindInfluence – How much influence wind has on the SmartBone object.
+  * [Number] WindInfluence – How much influence wind has on the SmartBone object.
 
-* * [Number] AnchorDepth – This will determine how far down in heirarchy from the Root that bones will be Anchored.
+  * [Number] AnchorDepth – This will determine how far down in heirarchy from the Root that bones will be Anchored.
 
-* * [Boolean] AnchorsRotate – If true, the root bone(s) will rotate along with the rest of the bone(s), but remain in static position. If false, the root bone(s) will remain completely static in both Position and Orientation.
+  * [Boolean] AnchorsRotate – If true, the root bone(s) will rotate along with the rest of the bone(s), but remain in static position. If false, the root bone(s) will remain completely static in both Position and Orientation.
 
-* * [Number] UpdateRate – The rate, in frames-per-second, at which SmartBone will simulate.
+  * [Number] UpdateRate – The rate, in frames-per-second, at which SmartBone will simulate.
 
-* * [Number] ActivationDistance – The distance, in studs, at which the SmartBone stops simulation.
+  * [Number] ActivationDistance – The distance, in studs, at which the SmartBone stops simulation.
 
-* * [Number] ThrottleDistance – The distance, in studs, at which the SmartBone begins to throttle simulation rates based on distance. Scales based on UpdateRate.
+  * [Number] ThrottleDistance – The distance, in studs, at which the SmartBone begins to throttle simulation rates based on distance. Scales based on UpdateRate.
 
 * For Wind settings, apply Attributes to the Lighting Service:
 
-* * [Vector3] WindDirection – Self-explanatory, the Direction the wind should blow in World Space.
+  * [Vector3] WindDirection – Self-explanatory, the Direction the wind should blow in World Space.
 
-* * [Number] WindSpeed – The speed of the Bone(s) motion from the wind.
+  * [Number] WindSpeed – The speed of the Bone(s) motion from the wind.
 
-* * [Number] WindStrength – The strength of the wind.
+  * [Number] WindStrength – The strength of the wind.
 
 ## Things to note:
 
