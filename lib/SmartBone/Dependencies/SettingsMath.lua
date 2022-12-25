@@ -23,6 +23,6 @@ return {
 	BlendWeight = Clamp(0, 1),
 	UpdateRate = Clamp(0, 165),
 	WindStrength = Clamp(0, 10),
-	
+
 	Gravity = Offset(Vector3.new(0, -0.01, 0)),
 }

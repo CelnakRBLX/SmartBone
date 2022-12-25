@@ -1,11 +1,16 @@
---[[ SmartBone Version 1.0 by Celnak ]]--
+--[[ SmartBone Version 0.1.0 by Celnak ]] --
 
---// Services \\--
+-- // Types \\ --
+
+type dictionary = { [string]: any }
+type array = { [number]: any }
+
+-- // Services \\ --
 
 local LIGHTING = game:GetService("Lighting")
 local CollectionService = game:GetService("CollectionService")
 
---// Constructors \\--
+-- // Constructors \\ --
 
 local ZERO = Vector3.zero
 
@@ -25,25 +30,23 @@ local Utilities = require(script.Dependencies.Utilities)
 local ID_SEED = 12098135901304
 local ID_RANDOM = Random.new(ID_SEED)
 
---// Debug \\--
+-- // Debug \\ --
 
 local DEBUG = Config.Debug
 local DEBUG_FOLDER, DEBUG_HIGHLIGHT
 
 if DEBUG then
-
 	DEBUG_FOLDER = Instance.new("Model")
 	DEBUG_FOLDER.Name = "SMARTBONE_DEBUGFOLDER"
 	DEBUG_FOLDER.Parent = workspace
 
 	DEBUG_HIGHLIGHT = Instance.new("Highlight")
-	DEBUG_HIGHLIGHT.FillColor = Color3.fromRGB(255,0,0)
+	DEBUG_HIGHLIGHT.FillColor = Color3.fromRGB(255, 0, 0)
 	DEBUG_HIGHLIGHT.OutlineTransparency = 1
 	DEBUG_HIGHLIGHT.FillTransparency = 0
 	DEBUG_HIGHLIGHT.Parent = DEBUG_FOLDER
 	DEBUG_HIGHLIGHT.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 	DEBUG_HIGHLIGHT.Enabled = true
-
 end
 
 -- // Module \\ --
@@ -52,7 +55,7 @@ local CurrentControllers = {}
 local module = {}
 module.__index = module
 
-function module.new(rootPart: BasePart, rootList: any)
+function module.new(rootPart: BasePart, rootList: array)
 	local self = setmetatable({
 		ID = ID_RANDOM:NextInteger(1, 10000000),
 		RootPart = rootPart,
@@ -91,14 +94,15 @@ function module:Init()
 	self.Connections["AttributeChanged"] = RootPart.AttributeChanged:ConnectParallel(function(Attribute: string)
 		self:UpdateParameters(Attribute, RootPart:GetAttribute(Attribute))
 	end)
-	
+
 	self.Connections["LightingAttributeChanged"] = LIGHTING.AttributeChanged:ConnectParallel(function(Attribute: string)
 		self:UpdateParameters(Attribute, LIGHTING:GetAttribute(Attribute))
 	end)
 
 	for _, Bone in RootPart:GetDescendants() do
 		if Bone:IsA("Bone") and Bone.Parent:IsA("Bone") and #Bone:GetChildren() == 0 then
-			start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - Bone.Parent.WorldPosition).Magnitude)
+			start = Bone.WorldCFrame
+				+ (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - Bone.Parent.WorldPosition).Magnitude)
 			tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
 			tailBone.Name = Bone.Name .. "_Tail"
@@ -119,7 +123,7 @@ function module:AppendParticleTree(Root: Bone)
 	table.insert(self.ParticleTrees, ParticleTree.new(Root, self.RootPart, self.Settings.Gravity))
 end
 
-function module:AppendParticles(particleTree: any, Bone: Bone, ParentIndex: number, BoneLength: number)
+function module:AppendParticles(particleTree: dictionary, Bone: Bone, ParentIndex: number, BoneLength: number)
 	local Settings = self.Settings
 
 	local particle = Particle.new(Bone, particleTree.Root, self.RootPart, Settings)
@@ -158,7 +162,7 @@ function module:UpdateParameters(setting, value)
 	self.Settings[setting] = if SettingsMath[setting] then SettingsMath[setting](value) else value
 end
 
-function module:PreUpdate(particleTree: any)
+function module:PreUpdate(particleTree: dictionary)
 	local rootPart = particleTree.RootPart
 	local root = particleTree.Root
 
@@ -166,7 +170,7 @@ function module:PreUpdate(particleTree: any)
 	particleTree.ObjectMove = rootPart.Position - particleTree.ObjectPreviousPosition
 	particleTree.ObjectPreviousPosition = rootPart.Position
 	particleTree.RestGravity = root.CFrame:PointToWorldSpace(particleTree.LocalGravity)
-	
+
 	for _, particle in particleTree.Particles do
 		particle.LastTransformOffset = particle.TransformOffset
 		if particle.Bone == particle.Root then
@@ -178,7 +182,7 @@ function module:PreUpdate(particleTree: any)
 	end
 end
 
-function module:UpdateParticles(particleTree: any, Delta: number, LoopIndex: number)
+function module:UpdateParticles(particleTree: dictionary, Delta: number, LoopIndex: number)
 	local Settings = self.Settings
 
 	local Damping = Settings.Damping
@@ -223,15 +227,16 @@ function module:UpdateParticles(particleTree: any, Delta: number, LoopIndex: num
 
 			velocity = (particle.Position - particle.LastPosition)
 			move = (ObjectMove * Settings.Inertia)
-			
+
 			-- // WIP \\ --
-			
+
 			--[[if particle.IsColliding then
 				Damping += particle.Friction
 				if Damping > 1 then
 					Damping = 1
 				end
-			end]]--
+			end]]
+			--
 
 			particle.LastPosition = particle.Position + move
 			particle.Position += velocity * (1 - Damping) + Force + move + windMove
@@ -242,7 +247,7 @@ function module:UpdateParticles(particleTree: any, Delta: number, LoopIndex: num
 	end
 end
 
-function module:CorrectParticles(_ParticleTree: any, Delta: number)
+function module:CorrectParticles(particleTree: dictionary, Delta: number)
 	local Settings = self.Settings
 	local stiffness = Settings.Stiffness
 
@@ -250,8 +255,8 @@ function module:CorrectParticles(_ParticleTree: any, Delta: number)
 	local restLength, difference, length
 	local mat, restPosition, maxLength
 
-	for _, point in _ParticleTree.Particles do
-		parentPoint = _ParticleTree.Particles[point.ParentIndex]
+	for _, point in particleTree.Particles do
+		parentPoint = particleTree.Particles[point.ParentIndex]
 
 		if parentPoint and point.ParentIndex >= 1 and point.Anchored == false then
 			restLength = (parentPoint.TransformOffset.Position - point.TransformOffset.Position).Magnitude
@@ -282,23 +287,23 @@ function module:CorrectParticles(_ParticleTree: any, Delta: number)
 	end
 end
 
-function module:SkipUpdateParticles(_ParticleTree: any)
+function module:SkipUpdateParticles(particleTree: dictionary)
 	local parentPoint, restLength, stiffness
 	local restPosition, difference, length, maxLength
 
-	for _, point in _ParticleTree.Particles do
+	for _, point in particleTree.Particles do
 		if point.ParentIndex >= 1 and not point.Anchored then
-			point.LastPosition += _ParticleTree.ObjectMove
-			point.Position += _ParticleTree.ObjectMove
+			point.LastPosition += particleTree.ObjectMove
+			point.Position += particleTree.ObjectMove
 
-			parentPoint = _ParticleTree.Particles[point.ParentIndex]
+			parentPoint = particleTree.Particles[point.ParentIndex]
 			restLength = (parentPoint.TransformOffset.Position - point.TransformOffset.Position).Magnitude
 			stiffness = self.Settings.Stiffness
 
 			if stiffness > 0 then
 				restPosition = parentPoint.Position
 					+ CFrame.lookAt(parentPoint.Position, point.Position).LookVector.Unit
-					* (parentPoint.Position - point.Position).Magnitude
+						* (parentPoint.Position - point.Position).Magnitude
 
 				difference = restPosition - point.Position
 				length = difference.Magnitude
@@ -320,18 +325,18 @@ function module:SkipUpdateParticles(_ParticleTree: any)
 	end
 end
 
-function module:CalculateTransforms(_ParticleTree, Delta: number)
+function module:CalculateTransforms(particleTree: dictionary, Delta: number)
 	if self.InRange then
 		local parentPoint, boneParent, bone
 		local localPosition, referenceCFrame, v0, v1, rotation, factor, alpha
 
-		for _, point in _ParticleTree.Particles do
+		for _, point in particleTree.Particles do
 			if point.ParentIndex >= 1 and point.Anchored == false then
-				parentPoint = _ParticleTree.Particles[point.ParentIndex]
+				parentPoint = particleTree.Particles[point.ParentIndex]
 				boneParent = parentPoint.Bone
 				bone = point.Bone
 
-				if parentPoint and boneParent and boneParent:IsA("Bone") and boneParent ~= _ParticleTree.Root then
+				if parentPoint and boneParent and boneParent:IsA("Bone") and boneParent ~= particleTree.Root then
 					localPosition = parentPoint.LocalTransformOffset.Position
 					referenceCFrame = parentPoint.TransformOffset
 					v0 = referenceCFrame:PointToObjectSpace(localPosition)
@@ -351,16 +356,16 @@ function module:CalculateTransforms(_ParticleTree, Delta: number)
 	end
 end
 
-function module:TransformBones(_ParticleTree: any)
+function module:TransformBones(particleTree: dictionary)
 	local parentPoint, boneParent
 
 	if self.InRange then
-		for _, point in _ParticleTree.Particles do
+		for _, point in particleTree.Particles do
 			if point.ParentIndex >= 1 and point.Anchored == false then
-				parentPoint = _ParticleTree.Particles[point.ParentIndex]
+				parentPoint = particleTree.Particles[point.ParentIndex]
 				boneParent = parentPoint.Bone
 
-				if parentPoint and boneParent and boneParent:IsA("Bone") and boneParent ~= _ParticleTree.Root then
+				if parentPoint and boneParent and boneParent:IsA("Bone") and boneParent ~= particleTree.Root then
 					if parentPoint.Anchored and self.Settings.AnchorsRotate == false then
 						boneParent.WorldCFrame = parentPoint.TransformOffset
 					else
@@ -372,15 +377,15 @@ function module:TransformBones(_ParticleTree: any)
 	end
 end
 
-function module:DEBUG(_ParticleTree: any)
-	for _, point in _ParticleTree.Particles do
+function module:DEBUG(particleTree: dictionary)
+	for _, point in particleTree.Particles do
 		if point then
 			point.DebugPart.CFrame = CFrame.new(point.Position) * point.TransformOffset.Rotation
 		end
 	end
 end
 
-function module:RunLoop(_ParticleTree: any, Delta: number)
+function module:RunLoop(particleTree: dictionary, Delta: number)
 	local UpdateRate = self.Settings.UpdateRate
 	local loop = 1
 	local timeVar = (1 / UpdateRate)
@@ -401,29 +406,29 @@ function module:RunLoop(_ParticleTree: any, Delta: number)
 
 	if loop > 0 then
 		for i = 0, loop do
-			self:UpdateParticles(_ParticleTree, timeVar, i)
-			self:CorrectParticles(_ParticleTree, timeVar)
+			self:UpdateParticles(particleTree, timeVar, i)
+			self:CorrectParticles(particleTree, timeVar)
 		end
 	else
-		self:SkipUpdateParticles(_ParticleTree)
+		self:SkipUpdateParticles(particleTree)
 	end
 end
 
-function module:ResetParticles(_ParticleTree: any)
-	for _, point in _ParticleTree.Particles do
+function module:ResetParticles(particleTree: dictionary)
+	for _, point in particleTree.Particles do
 		point.LastPosition = point.TransformOffset.Position
 		point.Position = point.TransformOffset.Position
 	end
 end
 
-function module:ResetTransforms(_ParticleTree: any)
+function module:ResetTransforms(particleTree: dictionary)
 	local transformOffset
 
-	for _, point in _ParticleTree.Particles do
+	for _, point in particleTree.Particles do
 		if point.Bone == point.Root then
-			transformOffset = _ParticleTree.RootPart.CFrame * point.RootTransform
+			transformOffset = particleTree.RootPart.CFrame * point.RootTransform
 		else
-			transformOffset = _ParticleTree.Root.WorldCFrame * point.Transform
+			transformOffset = particleTree.Root.WorldCFrame * point.Transform
 		end
 
 		point.Bone.WorldCFrame = transformOffset
@@ -434,17 +439,16 @@ function module:UpdateBones(Delta: number)
 	for _, particleTree in self.ParticleTrees do
 		self:PreUpdate(particleTree)
 		self:RunLoop(particleTree, Delta)
-		
+
 		if DEBUG then
 			self:DEBUG(particleTree, Delta)
 		end
-		
+
 		self:CalculateTransforms(particleTree, Delta)
 	end
 end
 
 function module.Start()
-	
 	local Player = game.Players.LocalPlayer
 
 	local ActorsFolder = Instance.new("Folder")
@@ -458,15 +462,22 @@ function module.Start()
 	end
 
 	local SmartBones = {}
-	local Connections = {}
 	local IgnoreList = {}
 
-	local function registerSmartBoneObject(Object: Instance)
+	local function registerSmartBoneObject(Object: BasePart)
 		task.spawn(function()
-			if Object:IsA("BasePart") and Object:FindFirstChildOfClass("Bone") and game.Workspace:IsAncestorOf(Object) then
+			if
+				Object:IsA("BasePart")
+				and Object:FindFirstChildOfClass("Bone")
+				and game.Workspace:IsAncestorOf(Object)
+			then
 				local RootList = {}
 
-				if Object:GetAttribute("Roots") and Object:GetAttribute("Roots") ~= nil and typeof(Object:GetAttribute("Roots")) == 'string' then
+				if
+					Object:GetAttribute("Roots")
+					and Object:GetAttribute("Roots") ~= nil
+					and typeof(Object:GetAttribute("Roots")) == "string"
+				then
 					local list = string.split(Object:GetAttribute("Roots"), ",")
 					for _, value in ipairs(list) do
 						local Bone = Object:FindFirstChild(value, true)
@@ -476,24 +487,24 @@ function module.Start()
 					end
 				end
 
-				if #RootList > 0 then				
+				if #RootList > 0 then
 					local SmartBoneActor = Instance.new("Actor")
-					
+
 					local Event = Instance.new("BindableFunction")
 					Event.Name = "Event"
 					Event.Parent = SmartBoneActor
-					
+
 					local RuntimeScript = script.Dependencies.ActorScript:Clone()
 					RuntimeScript.Name = "Runtime"
 					RuntimeScript.Parent = SmartBoneActor
-					
+
 					SmartBoneActor.Parent = ActorsFolder
-					
+
 					RuntimeScript.Enabled = true
 
-					SmartBones[Object], Connections[Object] = SmartBoneActor.Event:Invoke(Object, RootList)
+					SmartBones[Object] = SmartBoneActor.Event:Invoke(Object, RootList)
 
-					SmartBoneActor.Name = Object.Name..SmartBones[Object].ID
+					SmartBoneActor.Name = Object.Name .. SmartBones[Object].ID
 
 					SmartBones[Object].RemovedEvent.Event:Once(function()
 						SmartBoneActor.Runtime.Enabled = false
@@ -501,33 +512,35 @@ function module.Start()
 					end)
 
 					table.insert(IgnoreList, Object)
-					DebugPrint("Created new SmartBone Object with ID: "..SmartBones[Object].ID)				
-
+					DebugPrint("Created new SmartBone Object with ID: " .. SmartBones[Object].ID)
 				else
 					table.insert(IgnoreList, Object)
-					DebugPrint("Failed to create SmartBone Object for ".. Object:GetFullName().."! Make sure you have defined the Root Bone(s) for this object!")
-				end			
+					DebugPrint(
+						"Failed to create SmartBone Object for "
+							.. Object:GetFullName()
+							.. "! Make sure you have defined the Root Bone(s) for this object!"
+					)
+				end
 			end
 		end)
 	end
 
-	local function removeSmartBoneObject(Object: Instance)
+	local function removeSmartBoneObject(Object: BasePart)
 		if SmartBones[Object] then
-			print("Removing SmartBone Object with ID: "..SmartBones[Object].ID)	
+			print("Removing SmartBone Object with ID: " .. SmartBones[Object].ID)
 			task.spawn(function()
-				
 				for _, Connection in pairs(SmartBones[Object].Connections) do
 					Connection:Disconnect()
 				end
-				
+
 				SmartBones[Object].SimulationConnection:Disconnect()
-				
+
 				task.wait()
 
 				SmartBones[Object].RemovedEvent:Destroy()
 
-				for _, _ParticleTree in ipairs(SmartBones[Object].ParticleTrees) do
-					for _, _Particle in _ParticleTree.Particles do
+				for _, particleTree in ipairs(SmartBones[Object].ParticleTrees) do
+					for _, _Particle in particleTree.Particles do
 						for _, Recycling in _Particle.RecyclingBin do
 							Recycling:Destroy()
 						end
@@ -537,27 +550,25 @@ function module.Start()
 				task.wait()
 
 				if CurrentControllers[SmartBones[Object].ID] then
-					CurrentControllers[SmartBones[Object].ID] = nil 
+					CurrentControllers[SmartBones[Object].ID] = nil
 				end
 
 				SmartBones[Object].Removed = true
 				SmartBones[Object].RemovedEvent:Fire()
-				
+
 				SmartBones[Object] = nil
-				
 			end)
 		end
 	end
 
 	CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(registerSmartBoneObject)
 	CollectionService:GetInstanceRemovedSignal("SmartBone"):Connect(removeSmartBoneObject)
-	
+
 	for _, Object in pairs(CollectionService:GetTagged("SmartBone")) do
 		if not SmartBones[Object] and not table.find(IgnoreList, Object) then
 			registerSmartBoneObject(Object)
 		end
 	end
-	
 end
 
 return module

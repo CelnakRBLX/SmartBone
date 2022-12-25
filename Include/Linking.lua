@@ -1,1 +1,0 @@
-return require(script.Packages["[PACKAGE_NAME]"])

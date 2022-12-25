@@ -4,24 +4,7 @@
       "$className": "DataModel",
       "ReplicatedStorage": {
         "$className": "ReplicatedStorage",
-        "[PROJECT_NAME]": {
-            "$path": "Include/Linking.lua",
-            "Packages": {
-                "$path": "Packages",
-                "[PROJECT_NAME]": {
-                    "$path": "lib"
-                }        
-              }
-        
-      }
-       
-      },
-      "ServerScriptService": {
-          "$className": "ServerScriptService",
-          "Server": {
-            "$path": "testing"
-          }
+        "$path": "lib"
       }
     }
-    
-  }
+}

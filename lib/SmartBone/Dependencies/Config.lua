@@ -1,4 +1,3 @@
 return {
 	Debug = false,
-	
 }
