@@ -21,6 +21,7 @@ type particle = {
 	IsColliding: boolean,
 	BoneLength: number,
 	HeirarchyLength: number,
+	DebugPart: BasePart,
 
 	TransformOffset: CFrame,
 	LastTransformOffset: CFrame,
@@ -187,7 +188,17 @@ function module:AppendParticles(particleTree: dictionary, Bone: Bone, ParentInde
 	particle.ParentIndex = ParentIndex
 	particle.BoneLength = BoneLength
 	particle.HeirarchyLength = 0
-
+	if DEBUG == true then
+		particle.DebugPart = Instance.new("Part")
+		particle.DebugPart.Size = Vector3.new(.1,.1,.1)
+		particle.DebugPart.Anchored = true
+		particle.DebugPart.CanCollide = false
+		particle.DebugPart.CastShadow = false
+		particle.DebugPart.CanTouch = false
+		particle.DebugPart.CanQuery = false
+		particle.DebugPart.Color = Color3.fromRGB(255,0,0)
+		particle.DebugPart.Parent = DEBUG_FOLDER
+	end
 	if ParentIndex >= 1 then
 		BoneLength = (particleTree.Particles[ParentIndex].Bone.WorldPosition - particle.Position).Magnitude
 		particle.BoneLength = BoneLength
@@ -435,7 +446,7 @@ end
 function module:DEBUG(particleTree: particleTree)
 	for _, point in particleTree.Particles do
 		if point then
-			point.DebugPart.CFrame = CFrame.new(point.Position) * point.TransformOffset.Rotation
+			point.DebugPart.CFrame = CFrame.new(point.Position)
 		end
 	end
 end
@@ -494,11 +505,6 @@ function module:UpdateBones(Delta: number)
 	for _, particleTree: particleTree in self.ParticleTrees do
 		self:PreUpdate(particleTree)
 		self:RunLoop(particleTree, Delta)
-
-		if DEBUG then
-			self:DEBUG(particleTree, Delta)
-		end
-
 		self:CalculateTransforms(particleTree, Delta)
 	end
 end
