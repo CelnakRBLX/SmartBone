@@ -19,6 +19,8 @@ type particle = {
 	RootTransform: CFrame,
 	Radius: number,
 	IsColliding: boolean,
+	BoneLength: number,
+	HeirarchyLength: number,
 
 	TransformOffset: CFrame,
 	LastTransformOffset: CFrame,
@@ -38,7 +40,7 @@ type particleArray = {
 }
 type particleTree = {
 	WindOffset: number,
-	Root: Bone | nil,
+	Root: Bone,
 	RootPart: BasePart,
 	RootWorldToLocal: Vector3,
 	BoneTotalLength: number,
@@ -220,7 +222,6 @@ function module:PreUpdate(particleTree: particleTree)
 	local rootPart = particleTree.RootPart
 	local root = particleTree.Root
 
-	particleTree.DistanceFromCamera = (rootPart.Position - workspace.CurrentCamera.CFrame.Position).Magnitude
 	particleTree.ObjectMove = rootPart.Position - particleTree.ObjectPreviousPosition
 	particleTree.ObjectPreviousPosition = rootPart.Position
 	particleTree.RestGravity = root.CFrame:PointToWorldSpace(particleTree.LocalGravity)
