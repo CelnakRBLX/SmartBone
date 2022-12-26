@@ -32,10 +32,15 @@ if not Module then
 	warn("SmartBone was not found!")
 	return
 end
+
 local Dependencies = Module:WaitForChild("Dependencies")
+local Config = require(Dependencies:WaitForChild("Config"))
 
 local SmartBone = require(Module)
 local CameraUtil = require(Dependencies:WaitForChild("CameraUtil"))
+
+
+local DEBUG = Config.Debug
 
 --[[ Local Functions ]] --
 
@@ -81,7 +86,11 @@ local function Initialize(Object: BasePart, RootList: array)
 
 				for _, _ParticleTree in SBone.ParticleTrees do
 					SBone:TransformBones(_ParticleTree, Delta)
+					if DEBUG then
+						SBone:DEBUG(_ParticleTree, Delta)
+					end
 				end
+				
 
 				debug.profileend()
 
