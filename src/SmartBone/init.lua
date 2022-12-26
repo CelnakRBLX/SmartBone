@@ -1,4 +1,4 @@
---[[ SmartBone Version 0.1.0 by Celnak ]] --
+--[[ SmartBone Version 0.1.1 by Celnak ]] --
 
 -- // Types \\ --
 
