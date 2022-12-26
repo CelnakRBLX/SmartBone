@@ -1,4 +1,4 @@
---[[ SmartBone Version 0.1.1 by Celnak ]] --
+--[[ SmartBone Version 0.1.2 by Celnak ]] --
 
 -- // Types \\ --
 
@@ -151,10 +151,12 @@ function module:Init()
 	CurrentControllers[self.ID] = self
 
 	self.Connections["AttributeChanged"] = RootPart.AttributeChanged:ConnectParallel(function(Attribute: string)
+		if not self.Settings[Attribute] then return end
 		self:UpdateParameters(Attribute, RootPart:GetAttribute(Attribute))
 	end)
 
 	self.Connections["LightingAttributeChanged"] = Lighting.AttributeChanged:ConnectParallel(function(Attribute: string)
+		if not self.Settings[Attribute] then return end
 		self:UpdateParameters(Attribute, Lighting:GetAttribute(Attribute))
 	end)
 
@@ -228,6 +230,7 @@ function module:AppendParticles(particleTree: dictionary, Bone: Bone, ParentInde
 end
 
 function module:UpdateParameters(setting, value)
+	if not self.Settings[setting] then return end
 	self.Settings[setting] = if SettingsMath[setting] then SettingsMath[setting](value) else value
 end
 
