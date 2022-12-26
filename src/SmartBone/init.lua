@@ -138,6 +138,8 @@ function module.new(rootPart: BasePart, rootList: array)
 
 	self:Init()
 
+	self:UpdateParameters(self.Settings)
+
 	return self
 end
 
