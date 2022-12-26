@@ -6,6 +6,14 @@ An optimized solution for dynamically simulated bone physics inside Roblox.
 * Dynamic Bone Physics Simulation
 * Wind Simulation
 
+## Setting up the module:
+
+```lua
+-- LocalScript
+
+local SmartBone = require(game.ReplicatedStorage:WaitForChild("SmartBone"))
+SmartBone.Start()
+```
 
 ## How to set up a SmartBone Object:
 
