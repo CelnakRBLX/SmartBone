@@ -235,11 +235,13 @@ function module:UpdateParameters(setting, value)
 end
 
 function module:PreUpdate(particleTree: particleTree)
+	
 	local rootPart = particleTree.RootPart
 	local root = particleTree.Root
-
-	particleTree.ObjectMove = rootPart.Position - particleTree.ObjectPreviousPosition
+	
+	particleTree.ObjectMove = (rootPart.Position - particleTree.ObjectPreviousPosition)
 	particleTree.ObjectPreviousPosition = rootPart.Position
+
 	particleTree.RestGravity = root.CFrame:PointToWorldSpace(particleTree.LocalGravity)
 
 	for _, particle in particleTree.Particles do
@@ -307,12 +309,12 @@ function module:UpdateParticles(particleTree: particleTree, Delta: number, LoopI
 					Damping = 1
 				end
 			end]]
-			--
+			
 
 			particle.LastPosition = particle.Position + move
 			particle.Position += velocity * (1 - Damping) + Force + move + windMove
 		else
-			particle.LastPosition = particle.Position
+			particle.LastPosition = particle.TransformOffset.Position--particle.Bone.WorldPosition
 			particle.Position = particle.TransformOffset.Position
 		end
 	end
@@ -390,7 +392,7 @@ function module:SkipUpdateParticles(particleTree: particleTree)
 				point.Position += difference * ((length - restLength) / length)
 			end
 		else
-			point.LastPosition = point.TransformOffset.Position
+			point.LastPosition = point.TransformOffset.Position--point.Bone.WorldPosition
 			point.Position = point.TransformOffset.Position
 		end
 	end
@@ -398,14 +400,13 @@ end
 
 function module:CalculateTransforms(particleTree: particleTree, Delta: number)
 	if self.InRange then
-		local parentPoint, boneParent, bone
+		local parentPoint, boneParent
 		local localPosition, referenceCFrame, v0, v1, rotation, factor, alpha
 
 		for _, point in particleTree.Particles do
 			if point.ParentIndex >= 1 and point.Anchored == false then
 				parentPoint = particleTree.Particles[point.ParentIndex]
 				boneParent = parentPoint.Bone
-				bone = point.Bone
 
 				if parentPoint and boneParent and boneParent:IsA("Bone") and boneParent ~= particleTree.Root then
 					localPosition = parentPoint.LocalTransformOffset.Position
@@ -415,12 +416,10 @@ function module:CalculateTransforms(particleTree: particleTree, Delta: number)
 					rotation = Utilities.GetRotationBetween(referenceCFrame.UpVector, v1, v0).Rotation
 						* referenceCFrame.Rotation
 
-					factor = 0.0000001
+					factor = 0.00001
 					alpha = (1 - factor ^ Delta)
 
-					parentPoint.CalculatedWorldCFrame =
-						boneParent.WorldCFrame:Lerp(CFrame.new(parentPoint.Position) * rotation, alpha)
-					point.CalculatedWorldPosition = Utilities.Lerp(bone.WorldPosition, point.Position, alpha)
+					parentPoint.CalculatedWorldCFrame = boneParent.WorldCFrame:Lerp(CFrame.new(parentPoint.Position) * rotation, alpha)
 				end
 			end
 		end
@@ -456,30 +455,24 @@ function module:DEBUG(particleTree: particleTree)
 	end
 end
 
-function module:RunLoop(particleTree: particleTree, Delta: number)
-	local UpdateRate = self.Settings.UpdateRate
-	local loop = 1
-	local timeVar = (1 / UpdateRate)
+function module:RunLoop(particleTree: particleTree, Delta: number, UpdateRate: number)
+	local ready = true
+	local timeVar = Delta * 10
 
 	if UpdateRate > 0 then
 		local frameTime = 1 / UpdateRate
 		self.Time += Delta
-		loop = 0
+		ready = false
 
-		while self.Time >= frameTime do
-			loop += 1
-			if loop >= 3 then
-				self.Time = 0
-				break
-			end
+		if self.Time >= frameTime then
+			ready = true
+			self.Time = 0
 		end
 	end
 
-	if loop > 0 then
-		for i = 0, loop do
-			self:UpdateParticles(particleTree, timeVar, i)
-			self:CorrectParticles(particleTree, timeVar)
-		end
+	if ready then
+		self:UpdateParticles(particleTree, timeVar, 0)
+		self:CorrectParticles(particleTree, timeVar)
 	else
 		self:SkipUpdateParticles(particleTree)
 	end
@@ -506,10 +499,10 @@ function module:ResetTransforms(particleTree: particleTree)
 	end
 end
 
-function module:UpdateBones(Delta: number)
+function module:UpdateBones(Delta: number, UpdateRate: number)
 	for _, particleTree: particleTree in self.ParticleTrees do
-		self:PreUpdate(particleTree)
-		self:RunLoop(particleTree, Delta)
+		self:PreUpdate(particleTree, Delta)
+		self:RunLoop(particleTree, Delta, UpdateRate)
 		self:CalculateTransforms(particleTree, Delta)
 	end
 end
