@@ -71,16 +71,19 @@ local ZERO = Vector3.zero
 
 -- // Dependencies \\ --
 
-local Config = require(script.Dependencies.Config)
+local Dependencies = script:WaitForChild("Dependencies")
+local Components = script:WaitForChild("Components")
 
-local UnitConversion = require(script.Dependencies.UnitConversion)
-local DefaultSettings = require(script.Dependencies.DefaultSettings)
+local Config = require(Dependencies.Config)
 
-local ParticleTree = require(script.Components.ParticleTree)
-local Particle = require(script.Components.Particle)
+local UnitConversion = require(Dependencies.UnitConversion)
+local DefaultSettings = require(Dependencies.DefaultSettings)
 
-local SettingsMath = require(script.Dependencies.SettingsMath)
-local Utilities = require(script.Dependencies.Utilities)
+local ParticleTree = require(Components.ParticleTree)
+local Particle = require(Components.Particle)
+
+local SettingsMath = require(Dependencies.SettingsMath)
+local Utilities = require(Dependencies.Utilities)
 
 local ID_SEED = 12098135901304
 local ID_RANDOM = Random.new(ID_SEED)
