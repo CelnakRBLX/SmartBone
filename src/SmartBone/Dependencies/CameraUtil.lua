@@ -14,13 +14,14 @@ function cameraUtil.WithinViewport(Object: Model | BasePart)
 	end
 
 	for i = 1, 8 do
-		local point = CF * CFrame.new(
+		local Point = CF * CFrame.new(
 			Size.X * (i % 2 == 0 and 0.5 or -0.5),
 			Size.Y * (i % 4 > 1 and 0.5 or -0.5),
 			Size.Z * (i % 8 > 3 and 0.5 or -0.5)
 		)
-
-		if CameraObject:WorldToViewportPoint(point.Position) then
+		
+		local _, OnScreen = CameraObject:WorldToViewportPoint(point.Position)
+		if OnScreen then
 			return true
 		end
 	end
