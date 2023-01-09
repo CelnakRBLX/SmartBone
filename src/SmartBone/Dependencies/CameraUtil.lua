@@ -20,7 +20,7 @@ function cameraUtil.WithinViewport(Object: Model | BasePart)
 			Size.Z * (i % 8 > 3 and 0.5 or -0.5)
 		)
 		
-		local _, OnScreen = CameraObject:WorldToViewportPoint(point.Position)
+		local _, OnScreen = CameraObject:WorldToViewportPoint(Point.Position)
 		if OnScreen then
 			return true
 		end
