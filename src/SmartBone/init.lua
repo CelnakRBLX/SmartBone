@@ -59,6 +59,7 @@ type particleTree = {
 local Lighting = game:GetService("Lighting")
 local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
 if not RunService:IsClient() then 
 	warn("Attempted to initialize SmartBone on Server.") 
@@ -85,8 +86,7 @@ local Particle = require(Components.Particle)
 local SettingsMath = require(Dependencies.SettingsMath)
 local Utilities = require(Dependencies.Utilities)
 
-local ID_SEED = 12098135901304
-local ID_RANDOM = Random.new(ID_SEED)
+local ID_RANDOM = Random.new()
 
 local SmartBoneTags = CollectionService:GetTagged("SmartBone")
 
@@ -220,12 +220,8 @@ function module:AppendParticles(particleTree: dictionary, Bone: Bone, ParentInde
 	table.insert(particleTree.Particles, particle)
 
 	local index = #particleTree.Particles
-	local boneChildren = Bone:GetChildren()
-
-	local child
-
-	for i = 1, #boneChildren do
-		child = boneChildren[i]
+	
+	for _, child in Bone:GetChildren() then
 		if child:IsA("Bone") then
 			self:AppendParticles(particleTree, child, index, BoneLength)
 		end
@@ -272,8 +268,7 @@ function module:UpdateParticles(particleTree: particleTree, Delta: number, LoopI
 
 	local ObjectMove = LoopIndex == 0 and particleTree.ObjectMove or ZERO
 
-	local windMove, velocity, move
-	local timeModifier
+	local windMove, velocity, move, timeModifier
 
 	for _, particle in particleTree.Particles do
 		if particle.ParentIndex >= 1 and particle.Anchored == false then
@@ -511,8 +506,8 @@ function module:UpdateBones(Delta: number, UpdateRate: number)
 end
 
 function module.Start()
-	local Player = game.Players.LocalPlayer
-
+	local Player = Players.LocalPlayer
+	
 	local ActorsFolder = Instance.new("Folder")
 	ActorsFolder.Name = "Actors"
 	ActorsFolder.Parent = Player:WaitForChild("PlayerScripts")
@@ -530,7 +525,7 @@ function module.Start()
 		if
 			Object:IsA("BasePart")
 			and Utilities.WaitForChildOfClass(Object, "Bone", 3)
-			and game.Workspace:IsAncestorOf(Object)
+			and game:GetService("Workspace"):IsAncestorOf(Object)
 		then
 			local RootList = {}
 
@@ -594,9 +589,6 @@ function module.Start()
 				end
 
 				SmartBones[Object].SimulationConnection:Disconnect()
-
-				task.wait()
-
 				SmartBones[Object].RemovedEvent:Destroy()
 
 				for _, particleTree: particleTree in ipairs(SmartBones[Object].ParticleTrees) do
@@ -606,8 +598,6 @@ function module.Start()
 						end
 					end
 				end
-
-				task.wait()
 
 				if CurrentControllers[SmartBones[Object].ID] then
 					CurrentControllers[SmartBones[Object].ID] = nil
